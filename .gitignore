@@ -1,0 +1,40 @@
+# 依赖目录
+# 这是最重要的部分，node_modules目录包含了所有的项目依赖，体积庞大且可以通过npm install重新生成
+/node_modules
+
+# 日志文件
+# 忽略日志文件和目录
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# 环境变量文件
+# 这些文件通常包含敏感信息，如数据库密码、API密钥等，不应提交到代码库中
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+!.env.example
+
+# 构建输出目录
+# 如果您有构建步骤（例如使用Babel或TypeScript），则应忽略输出目录
+/dist
+/build
+/coverage
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 编辑器和IDE配置文件
+# 忽略特定于开发环境的编辑器配置
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
