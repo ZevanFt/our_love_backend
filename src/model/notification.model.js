@@ -40,22 +40,33 @@ const initializeNotificationModel = async () => {
           defaultValue: 'unread',
           comment: '通知状态',
         },
-        created_at: {
+        createdAt: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
-          comment: '通知创建时间',
+          allowNull: false,
+        },
+        updatedAt: {
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
+          allowNull: false,
+        },
+        deletedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
       },
       {
         tableName: 'lovedb_notifications',
         comment: '通知表',
-        timestamps: false,
+        timestamps: true, // 启用时间戳
+        paranoid: true, // 启用软删除
       },
     );
 
-    // 使用 alter: true 同步数据库表结构
+    // 使用 force: true 同步数据库表结构（会删除并重建表）
+    // await Notification.sync({ force: true });
     await Notification.sync({ alter: true });
-    console.log('通知-数据库表结构已更新');
+    console.log('通知-数据库表已重建');
     return Notification;
   } catch (error) {
     console.error('初始化 Notification 模型失败:', error);

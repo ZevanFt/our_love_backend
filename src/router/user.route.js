@@ -16,6 +16,8 @@ const {
   logout,
   getUserInfo,
   linkCouple,
+  unlinkCouple,
+  checkCoupleRequest,
 } = require('../controller/user.controller');
 
 const router = new Router({ prefix: '/user' });
@@ -44,10 +46,16 @@ router.post('/reset-pwd', verifyToken, verifyPassword, async (ctx) => {
   // 正确才可以重置新密码
 });
 
+// 检查用户自身有无未处理的请求
+router.get('/check-couple-request', verifyToken, checkCoupleRequest);
+
 // 链接情侣关系
 // 链接情侣关系需要双方同意把？
 // 双方都同意后才可以链接
 router.post('/link-couple', verifyToken, verifyCoupleRequest, linkCouple);
+
+// 解除情侣关系
+router.post('/unlink-couple', verifyToken, unlinkCouple);
 
 // 校验旧密码
 
