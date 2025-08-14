@@ -1,4 +1,5 @@
 const { getNotificationModel } = require('../model/notification.model');
+const { accessService } = require('../utils/console.utils');
 
 // 定义同步 Notification 模型的异步函数
 const syncNotificationModel = async () => {
@@ -22,63 +23,60 @@ syncNotificationModel();
  */
 class NotificationService {
   /**
-   * 创建解除情侣关系请求通知
-   * @param {number} receiverId - 接收通知的用户 ID
-   * @param {number} senderId - 发起解除请求的用户 ID
-   * @returns {Promise<Object>} - 返回新创建的通知记录
-   */
-  async createBreakupRequestNotification(receiverId, senderId) {
-    const Notification = await getNotificationModel();
-    const notificationData = {
-      receiver_id: receiverId,
-      sender_id: senderId,
-      type: 'breakup_request',
-      content: `你的伴侣（用户 ID: ${senderId}）向你发起了解除关系请求`,
-      status: 'unread',
-    };
-    return Notification.create(notificationData);
-  }
-
-  /**
-   * 更新通知状态
-   * @param {number} notificationId - 通知的 ID
-   * @param {string} status - 要更新的状态，如 'read', 'accepted', 'rejected'
-   * @returns {Promise<number>} - 返回受影响的行数
-   */
-  async updateNotificationStatus(notificationId, status) {
-    const Notification = await getNotificationModel();
-    return Notification.update({ status }, { where: { id: notificationId } });
-  }
-
-  /**
    * 创建通知
    * @param {Object} notificationData - 通知数据对象
-   * @returns {Promise<Object>} - 返回新创建的通知记录
+   * @param {number|number[]} notificationData.receiver_id - 接收者ID或ID数组
+   * @param {number} notificationData.sender_id - 发送者ID
+   * @param {string} notificationData.type - 通知类型
+   * @param {string} notificationData.content - 通知内容
+   * @returns {Promise<Object|Object[]>} - 返回创建的通知记录
    */
-  async createNotification(notificationData) {
+  async createNotification({ receiver_id, sender_id, type, content }) {
     const Notification = await getNotificationModel();
-    return Notification.create(notificationData);
+
+    if (Array.isArray(receiver_id)) {
+      const notifications = receiver_id.map((id) => ({
+        receiver_id: id,
+        sender_id,
+        type,
+        content,
+      }));
+      return Notification.bulkCreate(notifications);
+    } else {
+      return Notification.create({ receiver_id, sender_id, type, content });
+    }
+  }
+
+  /**
+   * 将通知标记为已读
+   * @param {number} notificationId - 通知的 ID
+   * @param {number} userId - 当前用户的 ID
+   * @returns {Promise<[number]>} - 返回受影响的行数
+   */
+  async updateNotificationStatus(notificationId, userId) {
+    const Notification = await getNotificationModel();
+    return Notification.update(
+      { is_read: true },
+      { where: { id: notificationId, receiver_id: userId } },
+    );
   }
 
   /**
    * 获取用户的通知列表
    * @param {number} userId - 用户 ID
+   * @param {boolean} [is_read] - 可选参数，用于筛选已读或未读通知。true为已读，false为未读，不提供则返回所有通知。
    * @returns {Promise<Array>} - 返回用户的通知列表
    */
-  async getNotifications(userId) {
+  async getNotifications(userId, is_read = null) {
+    accessService('getNotifications');
     const Notification = await getNotificationModel();
-    const notifications = await Notification.findAll({
-      where: { receiver_id: userId },
-    });
+    const where = { receiver_id: userId };
 
-    // 将未读通知状态更新为已读
-    for (const notification of notifications) {
-      if (notification.status === 'unread') {
-        await this.updateNotificationStatus(notification.id, 'read');
-      }
+    if (is_read !== null) {
+      where.is_read = is_read;
     }
 
-    return notifications;
+    return Notification.findAll({ where });
   }
 }
 

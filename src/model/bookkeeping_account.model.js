@@ -19,7 +19,7 @@ const initializeAccountModel = async () => {
           comment: '账户唯一标识符',
         },
         couple_link_id: {
-          type: DataTypes.UUID,
+          type: DataTypes.CHAR(36),
           allowNull: false,
           comment: '情侣关系唯一链接ID，关联到用户表',
           references: {

@@ -50,6 +50,13 @@ class UserService {
     accessService('createUser');
     // 调用 getUserModel 函数获取 User 模型
     const User = await getUserModel();
+
+    // 检查 yier_number 是否已存在
+    const existingUser = await User.findOne({ where: { yier_number } });
+    if (existingUser) {
+      throw new Error('该账号已存在，请使用其他账号');
+    }
+
     // 调用 User 模型的 create 方法，在数据库中创建一条新的用户记录
     const res = await User.create({
       name, // 用户昵称

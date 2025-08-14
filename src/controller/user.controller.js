@@ -219,7 +219,7 @@ class UserController {
         };
         return; // 结束当前函数执行
       }
-
+      console.log('情侣请求类型为：', action);
       // 根据操作类型执行不同的逻辑
       if (action === 'send') {
         // 调用 sendCoupleRequest 服务方法，向目标用户发送情侣请求
@@ -247,11 +247,12 @@ class UserController {
       }
     } catch (err) {
       // 捕获并打印操作过程中出现的错误信息
-      console.error('链接情侣关系失败:', err);
+      console.error('链接情侣关系失败:', err.message);
       ctx.body = {
         code: 500, // 状态码 500 表示服务器内部错误
         message: '链接情侣关系失败', // 错误提示信息
-        result: {}, // 空结果对象
+        // result: {}, // 空结果对象
+        result: err.message, // 空结果对象
       };
     }
   }

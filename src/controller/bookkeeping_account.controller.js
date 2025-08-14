@@ -32,7 +32,7 @@ class BookkeepingAccountController {
   async getAllAccounts(ctx) {
     try {
       const { user_id } = ctx.state.user;
-      const res = await accountService.getAllAccounts(user_id);
+      const res = await accountService.getAccountsByCoupleId(user_id);
       ctx.body = {
         code: 0,
         message: '获取账户列表成功',

@@ -19,7 +19,6 @@ const initializeUserModel = async () => {
         yier_number: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          unique: true,
           comment: '用户账号',
         },
         password: {
@@ -60,13 +59,17 @@ const initializeUserModel = async () => {
           type: DataTypes.UUID,
           allowNull: true,
           defaultValue: null,
-          unique: true,
           comment: '情侣关系唯一链接ID',
         },
         relationship: {
           type: DataTypes.ENUM('情侣', '夫妻'),
           allowNull: true,
           comment: '伴侣关系类型',
+        },
+        together_date: {
+          type: DataTypes.DATEONLY,
+          allowNull: true,
+          comment: '情侣在一起的日期',
         },
         manifesto: {
           type: DataTypes.STRING(255),
@@ -122,8 +125,8 @@ const initializeUserModel = async () => {
       },
     );
 
-    await UserModel.sync();
-    console.log('用户-数据库表结构已更新');
+    // await UserModel.sync({ alter: true });
+    // console.log('用户-数据库表结构已通过 alter:true 更新');
     return UserModel;
   } catch (error) {
     console.error('初始化 User 模型失败:', error);

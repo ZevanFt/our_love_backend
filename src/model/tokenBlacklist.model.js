@@ -41,7 +41,7 @@ let tokenBlacklistModelPromise;
       // 同步数据库
       TokenBlacklist.sync()
         .then(() => {
-          console.log('令牌黑名单-数据库表结构已更新');
+          // console.log('令牌黑名单-数据库表结构已更新');
           resolve(TokenBlacklist);
         })
         .catch((error) => {

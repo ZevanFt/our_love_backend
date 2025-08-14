@@ -14,10 +14,9 @@ const initializeNotificationModel = async () => {
           comment: '通知唯一标识符',
         },
         receiver_id: {
-          // 修改字段类型为 JSON，可存储数组
-          type: DataTypes.JSON,
+          type: DataTypes.INTEGER,
           allowNull: false,
-          comment: '接收者用户ID数组',
+          comment: '接收者用户ID',
         },
         sender_id: {
           type: DataTypes.INTEGER,
@@ -36,8 +35,15 @@ const initializeNotificationModel = async () => {
           comment: '通知内容',
         },
         status: {
-          type: DataTypes.ENUM('unread', 'read', 'accepted', 'rejected'),
+          type: DataTypes.ENUM(
+            'unread',
+            'read',
+            'accepted',
+            'rejected',
+            'pending',
+          ),
           defaultValue: 'unread',
+          allowNull: false,
           comment: '通知状态',
         },
         createdAt: {
@@ -65,8 +71,8 @@ const initializeNotificationModel = async () => {
 
     // 使用 force: true 同步数据库表结构（会删除并重建表）
     // await Notification.sync({ force: true });
-    await Notification.sync({ alter: true });
-    console.log('通知-数据库表已重建');
+    // await Notification.sync({ alter: true });
+    // console.log('通知-数据库表已重建');
     return Notification;
   } catch (error) {
     console.error('初始化 Notification 模型失败:', error);
