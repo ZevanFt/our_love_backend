@@ -116,6 +116,16 @@ const initializeUserModel = async () => {
           allowNull: true,
           comment: '情侣请求的状态',
         },
+        adcode: {
+          type: DataTypes.STRING(10),
+          allowNull: true,
+          comment: '用户所在区域的行政区划代码',
+        },
+        location: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+          comment: '用户所在的经纬度',
+        },
       },
       {
         tableName: 'lovedb_users',

@@ -69,4 +69,9 @@ module.exports = {
     accountDeleteError: { code: '70104', message: '删除账户失败' },
     // ... 可以在此基础上扩展 category, transaction, financial_goal 的错误
   },
+
+  // ================== 80000: 天气模块相关错误 ==================
+  weatherGetFail: { code: '80001', message: '获取天气信息失败' },
+  updateLocationFail: { code: '80002', message: '更新位置失败' },
+  getClothingSuggestionFail: { code: '80003', message: '获取穿衣建议失败' },
 };

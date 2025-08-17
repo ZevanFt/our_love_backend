@@ -1,78 +1,226 @@
-
-const { getAmapWeather, getAIClothingSuggestion, getAmapCityCode } = require('../service/weather.service');
+const {
+  getAmapWeather,
+  getAmapCityCode,
+  getClothingSuggestion,
+} = require('../service/weather.service');
+const userService = require('../service/user.service');
+const {
+  weatherGetSuccess,
+  updateLocationSuccess,
+  getLocationSuccess,
+  getClothingSuggestionSuccess,
+} = require('../constant/succuss.type');
+const {
+  weatherGetFail,
+  updateLocationFail,
+  noCoupleRelationshipError,
+  getClothingSuggestionFail,
+} = require('../constant/err.type');
 
 class WeatherController {
-    async getWeather(ctx) {
-        try {
-            const city = ctx.query.city || '110101'; // 默认北京
-            const weatherData = await getAmapWeather('base', city);
-            ctx.body = weatherData;
-        } catch (error) {
-            ctx.body = {
-                code: 500,
-                msg: '获取天气失败'
-            };
-        }
+  // 获取自己的当天天气
+  async getTodayWeather(ctx) {
+    try {
+      const { adcode } = ctx.query;
+      if (!adcode) {
+        return ctx.app.emit(
+          'error',
+          { code: 400, msg: 'adcode参数不能为空' },
+          ctx,
+        );
+      }
+      const weatherData = await getAmapWeather('all', adcode);
+      if (
+        !weatherData ||
+        !weatherData.forecasts ||
+        weatherData.forecasts.length === 0 ||
+        !weatherData.forecasts[0].casts ||
+        weatherData.forecasts[0].casts.length === 0
+      ) {
+        return ctx.app.emit('error', weatherGetFail, ctx);
+      }
+      const result = { ...weatherGetSuccess };
+      const todayWeather = weatherData.forecasts[0].casts[0];
+      todayWeather.weather_icon = 'weather-unknown';
+      result.result = todayWeather;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取当天天气失败', error);
+      ctx.app.emit('error', weatherGetFail, ctx);
     }
+  }
 
-    async getClothingSuggestion(ctx) {
-        try {
-            const city = ctx.query.city || '110000'; // 默认北京
-            const weatherresData = await getAmapWeather('base', city);
-            console.log(weatherresData, 'weatherData');
-            const weatherData = weatherresData.lives[0];
-
-            // 构建 AI 提示模板
-            const template = `
-        基于当前的天气状况，为您提供以下穿衣建议：
-
-        ### 基本天气信息
-        - **城市**：${weatherData.city}
-        - **天气状况**：${weatherData.weather}
-        - **温度**：${weatherData.temperature}℃
-        - **风力**：${weatherData.windpower}级
-        - **湿度**：${weatherData.humidity}%
-
-        ### 穿衣建议
-        #### 上衣
-        - **材质**：根据天气状况，建议选择{{top_material}}材质的衣物。
-        - **款式**：推荐穿着{{top_style}}，以应对当前的天气。
-
-        #### 下装
-        - **材质**：{{bottom_material}}材质的下装会比较合适。
-        - **款式**：建议选择{{bottom_style}}。
-
-        #### 配饰
-        - **帽子**：如果有必要，可以佩戴{{hat}}来保护头部。
-        - **鞋子**：穿着{{shoes}}能让您行走更舒适。
-        - **其他**：根据实际情况，还可以携带{{other_accessories}}。
-
-        ### 温馨提示
-        {{additional_tips}}
-                `;
-            console.log(template, 'template');
-            const clothingSuggestion = await getAIClothingSuggestion(template);
-            ctx.body = clothingSuggestion;
-        } catch (error) {
-            ctx.body = {
-                code: 500,
-                msg: '获取穿衣建议失败'
-            };
-        }
+  // 获取自己的预报天气
+  async getForeseeWeather(ctx) {
+    try {
+      const { geography } = ctx.query;
+      if (!geography) {
+        return ctx.app.emit(
+          'error',
+          { code: 400, msg: 'geography参数不能为空' },
+          ctx,
+        );
+      }
+      const cityInfo = await getAmapCityCode(geography);
+      const adcode = cityInfo.addressComponent.adcode;
+      const weatherData = await getAmapWeather('all', adcode);
+      const result = { ...weatherGetSuccess };
+      const forecast = weatherData.forecasts[0];
+      if (forecast && forecast.casts) {
+        forecast.casts.forEach((cast) => {
+          cast.weather_icon = 'weather-unknown';
+        });
+      }
+      result.result = forecast;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取预报天气失败', error);
+      ctx.app.emit('error', weatherGetFail, ctx);
     }
+  }
 
-    async getCityCode(ctx) {
-        try {
-            const geography = ctx.query.geography;
-            console.log(geography, 'geography');
-            const locationData = await getAmapCityCode(geography)
-            console.log(locationData.addressComponent.adcode, 'locationData.addressComponent.adcode');
-            ctx.body = locationData;
-        } catch (error) {
-            ctx.body = {
-                code: 500,//
-                msg: `更新个人位置失败:${error.message}`,
-            };
-        }
+  // 更新自己的位置
+  async updateUserLocation(ctx) {
+    try {
+      const { id } = ctx.state.user;
+      const { geography } = ctx.request.query;
+      if (!geography) {
+        return ctx.app.emit(
+          'error',
+          { code: 400, msg: 'geography参数不能为空' },
+          ctx,
+        );
+      }
+      const amapInfo = await getAmapCityCode(geography);
+      const adcode = amapInfo.addressComponent.adcode;
+      await userService.updateUser({ id }, { location: geography, adcode });
+      const result = { ...updateLocationSuccess };
+      result.result = amapInfo;
+      ctx.body = result;
+    } catch (error) {
+      console.error('更新位置失败:', error);
+      ctx.app.emit('error', updateLocationFail, ctx);
     }
+  }
+
+  // 获取对象当天天气
+  async getPartnerTodayWeather(ctx) {
+    try {
+      const { mate_id } = ctx.state.user;
+      if (!mate_id) {
+        return ctx.app.emit('error', noCoupleRelationshipError, ctx);
+      }
+      const partner = await userService.getUser({ id: mate_id });
+      if (!partner || !partner.adcode) {
+        return ctx.app.emit(
+          'error',
+          { code: '80004', message: '对象未设置位置信息' },
+          ctx,
+        );
+      }
+      const weatherData = await getAmapWeather('all', partner.adcode);
+      if (
+        !weatherData ||
+        !weatherData.forecasts ||
+        weatherData.forecasts.length === 0 ||
+        !weatherData.forecasts[0].casts ||
+        weatherData.forecasts[0].casts.length === 0
+      ) {
+        return ctx.app.emit('error', weatherGetFail, ctx);
+      }
+      const result = { ...weatherGetSuccess };
+      const todayWeather = weatherData.forecasts[0].casts[0];
+      todayWeather.weather_icon = 'weather-unknown';
+      result.result = todayWeather;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取对象当天天气失败', error);
+      ctx.app.emit('error', weatherGetFail, ctx);
+    }
+  }
+
+  // 获取对象预报天气
+  async getPartnerForeseeWeather(ctx) {
+    try {
+      const { mate_id } = ctx.state.user;
+      if (!mate_id) {
+        return ctx.app.emit('error', noCoupleRelationshipError, ctx);
+      }
+      const partner = await userService.getUser({ id: mate_id });
+      if (!partner || !partner.location) {
+        return ctx.app.emit(
+          'error',
+          { code: '80004', message: '对象未设置位置信息' },
+          ctx,
+        );
+      }
+      const cityInfo = await getAmapCityCode(partner.location);
+      const adcode = cityInfo.addressComponent.adcode;
+      const weatherData = await getAmapWeather('all', adcode);
+      const result = { ...weatherGetSuccess };
+      const forecast = weatherData.forecasts[0];
+      if (forecast && forecast.casts) {
+        forecast.casts.forEach((cast) => {
+          cast.weather_icon = 'weather-unknown';
+        });
+      }
+      result.result = forecast;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取对象预报天气失败', error);
+      ctx.app.emit('error', weatherGetFail, ctx);
+    }
+  }
+
+  // 获取对象地理位置信息
+  async getPartnerLocation(ctx) {
+    try {
+      const { mate_id } = ctx.state.user;
+      if (!mate_id) {
+        return ctx.app.emit('error', noCoupleRelationshipError, ctx);
+      }
+      const partner = await userService.getUser({ id: mate_id });
+      if (!partner || !partner.location) {
+        return ctx.app.emit(
+          'error',
+          { code: '80004', message: '对象未设置位置信息' },
+          ctx,
+        );
+      }
+      const amapInfo = await getAmapCityCode(partner.location);
+      const result = { ...getLocationSuccess };
+      result.result = amapInfo;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取对象位置信息失败', error);
+      ctx.app.emit(
+        'error',
+        { code: '80005', message: '获取对象位置信息失败' },
+        ctx,
+      );
+    }
+  }
+
+  // 获取穿衣建议
+  async getClothingSuggestion(ctx) {
+    try {
+      const { location } = ctx.request.query;
+      if (!location) {
+        return ctx.app.emit(
+          'error',
+          { code: 400, msg: '位置信息不能为空' },
+          ctx,
+        );
+      }
+      const suggestion = await getClothingSuggestion(location);
+      const result = { ...getClothingSuggestionSuccess };
+      result.result = suggestion;
+      ctx.body = result;
+    } catch (error) {
+      console.error('获取穿衣建议失败', error);
+      ctx.app.emit('error', getClothingSuggestionFail, ctx);
+    }
+  }
 }
+
+module.exports = new WeatherController();

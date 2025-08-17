@@ -120,7 +120,57 @@ const getAIClothingSuggestion = async (template) => {
   }
 };
 
+const getWeather = async (location) => {
+  accessService('getWeather');
+  try {
+    // 1. 根据经纬度获取城市编码
+    const cityInfo = await getAmapCityCode(location);
+    const adcode = cityInfo.addressComponent.adcode;
+    // 2. 根据城市编码获取天气数据
+    const weatherData = await getAmapWeather('all', adcode);
+    return weatherData;
+  } catch (error) {
+    console.error('获取天气数据失败:', error);
+    throw error;
+  }
+};
+
+const getClothingSuggestion = async (location) => {
+  accessService('getClothingSuggestion');
+  try {
+    // 1. 根据经纬度获取城市编码
+    const cityInfo = await getAmapCityCode(location);
+    const adcode = cityInfo.addressComponent.adcode;
+    const city =
+      Array.isArray(cityInfo.addressComponent.city) &&
+      cityInfo.addressComponent.city.length === 0
+        ? cityInfo.addressComponent.district
+        : cityInfo.addressComponent.city;
+    // 2. 根据城市编码获取实时天气数据
+    const weatherData = await getAmapWeather('base', adcode);
+    const liveWeather = weatherData.lives[0];
+    // 3. 构造 AI 穿衣建议模板
+    const template = `
+      城市：${city}
+      天气：${liveWeather.weather}
+      温度：${liveWeather.temperature}°C
+      湿度：${liveWeather.humidity}%
+      风向：${liveWeather.winddirection}
+      风力：${liveWeather.windpower}级
+      请根据以上天气信息，为我提供一份详细的今日穿衣建议。
+    `;
+    // 4. 获取 AI 穿衣建议
+    const suggestion = await getAIClothingSuggestion(template);
+    return suggestion;
+  } catch (error) {
+    console.error('获取穿衣建议失败:', error);
+    throw error;
+  }
+};
+
 module.exports = {
+  getWeather,
+  getClothingSuggestion,
   getAmapWeather,
   getAIClothingSuggestion,
   getAmapCityCode,

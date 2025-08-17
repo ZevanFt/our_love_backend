@@ -106,28 +106,19 @@ class UserService {
 
   /**
    * 更新用户信息的异步方法
-   * @param {number} id - 用户的唯一标识符
-   * @param {string} name - 用户的新昵称
-   * @param {string} yier_number - 用户的新账号
-   * @param {string} password - 用户的新密码
+   * @param {object} whereOpt - 查询条件对象，例如 { id: 1 }
+   * @param {object} newUserInfo - 包含新用户信息字段的对象
    * @returns {Array} - 更新操作的结果数组
    */
-  async updateUser(id, name, yier_number, password) {
+  async updateUser(whereOpt, newUserInfo) {
     // 调用 accessService 函数记录本次 updateUser 服务的访问日志
     accessService('updateUser');
     // 调用 getUserModel 函数获取 User 模型
     const User = await getUserModel();
     // 调用 User 模型的 update 方法，更新数据库中符合条件的用户记录
-    const res = await User.update(
-      {
-        name, // 用户新昵称
-        yier_number, // 用户新账号
-        password, // 用户新密码
-      },
-      {
-        where: { id }, // 根据用户 ID 定位要更新的记录
-      },
-    );
+    const res = await User.update(newUserInfo, {
+      where: whereOpt,
+    });
     // 返回更新操作的结果数组
     return res;
   }

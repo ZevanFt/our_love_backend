@@ -80,7 +80,7 @@
 - **Body:**
   ```json
   {
-    "productId": 1
+    "product_id": 1
   }
   ```
 - **Success Response (200):** (返回新生成的优惠券信息)
