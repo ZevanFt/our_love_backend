@@ -1,60 +1,42 @@
 module.exports = (err, ctx) => {
-    // 默认 HTTP 状态码，500 表示服务器内部错误
-    let status = 500;
-    // 默认自定义业务错误码，50000 表示通用服务器错误
-    let code = 50000;
-    // 默认错误消息
-    let msg = '服务器内部错误';
+  let status = 500; // 默认HTTP状态码
+  let code = 50000;
+  let message = '服务器内部错误';
 
-    // 根据不同的业务错误码设置 HTTP 状态码和自定义错误信息
-    switch (err.code) {
-        // 10001 表示请求参数错误
-        case '10001':
-            // 400 表示客户端请求错误
-            status = 400;
-            code = 10001;
-            msg = '请求参数错误';
-            break;
-        // 10002 表示资源冲突，比如用户名已存在
-        case '10002':
-            // 409 表示请求与服务器当前状态冲突
-            status = 409;
-            code = 10002;
-            msg = '资源冲突';
-            break;
-        // 20001 表示用户未认证
-        case '20001':
-            // 401 表示需要用户认证
-            status = 401;
-            code = 20001;
-            msg = '用户未认证，请先登录';
-            break;
-        // 20002 表示用户无权限
-        case '20002':
-            // 403 表示服务器理解请求但拒绝执行
-            status = 403;
-            code = 20002;
-            msg = '用户无权限访问该资源';
-            break;
-        // 30001 表示资源未找到
-        case '30001':
-            // 404 表示请求的资源未找到
-            status = 404;
-            code = 30001;
-            msg = '请求的资源未找到';
-            break;
-        default:
-            status = 500;
-            code = 50000;
-            msg = '服务器内部错误';
+  // 检查 err 对象是否是我们从控制器 emit 的标准错误格式
+  if (err.code && err.message) {
+    code = err.code;
+    message = err.message;
+
+    // 根据错误码的第一位数字设置合适的HTTP状态码
+    const firstDigit = String(code).charAt(0);
+    switch (firstDigit) {
+      case '1': // 1xxxx: 用户端错误
+        status = 400; // Bad Request
+        break;
+      case '2': // 2xxxx: 认证或权限错误
+        if (err.code === '10101' || err.code === '10102') {
+          status = 401; // Unauthorized
+        } else {
+          status = 403; // Forbidden
+        }
+        break;
+      case '3': // 3xxxx: 资源未找到 (我们这里用在了卡券模块)
+        status = 404; // Not Found
+        break;
+      // 其他错误码 (4xxxx, 5xxxx, 7xxxx 等) 默认使用 500
+      default:
+        status = 500;
     }
+  } else if (err.message) {
+    // 如果是一个普通的 Error 对象，就只用它的 message
+    message = err.message;
+  }
 
-    // 设置 HTTP 状态码
-    ctx.status = status;
-    // 以 JSON 格式返回错误信息，包含自定义业务错误码、错误消息
-    ctx.body = {
-        code,
-        msg,
-        data: null
-    };
+  ctx.status = status;
+  ctx.body = {
+    code: code,
+    msg: message, // 统一使用 msg 字段
+    data: null,
+  };
 };

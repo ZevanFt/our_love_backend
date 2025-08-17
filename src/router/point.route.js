@@ -1,5 +1,5 @@
 const Router = require('@koa/router');
-const { verifyToken } = require('../middleware/auth.middleware');
+const { auth } = require('../middleware/auth.middleware');
 const { validator } = require('../middleware/product.middleware');
 const {
   exchangeProduct,
@@ -12,7 +12,7 @@ const router = new Router({ prefix: '/points' });
 // 兑换商品 (需要登录)
 router.post(
   '/exchange',
-  verifyToken,
+  auth,
   validator({
     product_id: 'int',
   }),
@@ -20,9 +20,9 @@ router.post(
 );
 
 // 查询个人积分记录 (需要登录)
-router.get('/records', verifyToken, findRecords);
+router.get('/records', auth, findRecords);
 
 // 查询当前用户总积分 (需要登录)
-router.get('/', verifyToken, getUserPoints);
+router.get('/', auth, getUserPoints);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const Router = require('@koa/router');
 // 引入中间件
-const { verifyToken } = require('../middleware/auth.middleware');
+const { auth } = require('../middleware/auth.middleware');
 const {
   userValidator,
   verifyUser,
@@ -33,13 +33,13 @@ router.post('/register', userValidator, verifyUser, encryptPassword, register);
 router.post('/login', userValidator, verifyLogin, login);
 
 // 退出登录
-router.post('/logout', verifyToken, logout);
+router.post('/logout', auth, logout);
 
 // 个人信息
-router.get('/info', verifyToken, getUserInfo);
+router.get('/info', auth, getUserInfo);
 
 // 修改密码
-router.post('/reset-pwd', verifyToken, verifyPassword, async (ctx) => {
+router.post('/reset-pwd', auth, verifyPassword, async (ctx) => {
   ctx.body = '修改密码';
   // 旧密码，新密码
   // 校验旧密码是否正确
@@ -47,15 +47,15 @@ router.post('/reset-pwd', verifyToken, verifyPassword, async (ctx) => {
 });
 
 // 检查用户自身有无未处理的请求
-router.get('/check-couple-request', verifyToken, checkCoupleRequest);
+router.get('/check-couple-request', auth, checkCoupleRequest);
 
 // 链接情侣关系
 // 链接情侣关系需要双方同意把？
 // 双方都同意后才可以链接
-router.post('/link-couple', verifyToken, verifyCoupleRequest, linkCouple);
+router.post('/link-couple', auth, verifyCoupleRequest, linkCouple);
 
 // 解除情侣关系
-router.post('/unlink-couple', verifyToken, unlinkCouple);
+router.post('/unlink-couple', auth, unlinkCouple);
 
 // 校验旧密码
 
