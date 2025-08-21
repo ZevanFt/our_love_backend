@@ -472,6 +472,29 @@ class UserService {
       }
     }
   }
+
+  /**
+   * 获取情侣信息的异步方法
+   * @param {number} userId - 当前用户的 ID
+   * @returns {Object|null} - 如果找到情侣信息，返回情侣的用户数据；否则返回 null
+   */
+  async getPartnerInfo(userId) {
+    accessService('getPartnerInfo');
+    const User = await getUserModel();
+    const currentUser = await User.findOne({ where: { id: userId } });
+
+    if (currentUser && currentUser.mate_id) {
+      const partner = await User.findOne({
+        where: { id: currentUser.mate_id },
+        attributes: {
+          exclude: ['password'], // 排除密码字段
+        },
+      });
+      return partner ? partner.dataValues : null;
+    }
+
+    return null;
+  }
 }
 
 // 创建 UserService 类的实例

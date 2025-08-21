@@ -327,5 +327,38 @@ class UserController {
       };
     }
   }
+
+  /**
+   * 获取情侣信息的异步方法
+   * @param {object} ctx - Koa 上下文对象
+   */
+  async getPartnerInfo(ctx) {
+    accessController('getPartnerInfo');
+    try {
+      const userId = ctx.state.user.id;
+      const partnerInfo = await userService.getPartnerInfo(userId);
+
+      if (partnerInfo) {
+        ctx.body = {
+          code: '0',
+          message: '获取情侣信息成功',
+          result: partnerInfo,
+        };
+      } else {
+        ctx.body = {
+          code: '2',
+          message: '未找到情侣信息或尚未建立情侣关系',
+          result: {},
+        };
+      }
+    } catch (err) {
+      console.error('获取情侶信息失败:', err);
+      ctx.body = {
+        code: '3',
+        message: '获取情侶信息失败',
+        result: {},
+      };
+    }
+  }
 }
 module.exports = new UserController();

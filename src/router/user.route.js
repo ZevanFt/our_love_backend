@@ -15,6 +15,7 @@ const {
   login,
   logout,
   getUserInfo,
+  getPartnerInfo,
   linkCouple,
   unlinkCouple,
   checkCoupleRequest,
@@ -37,6 +38,9 @@ router.post('/logout', auth, logout);
 
 // 个人信息
 router.get('/info', auth, getUserInfo);
+
+// 获取情侣信息
+router.get('/partner', auth, getPartnerInfo);
 
 // 修改密码
 router.post('/reset-pwd', auth, verifyPassword, async (ctx) => {
